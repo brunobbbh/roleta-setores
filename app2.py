@@ -18,28 +18,36 @@ setores = {
 # ==============================
 
 def setor_do_numero(numero):
+
     for nome, numeros in setores.items():
+
         if numero in numeros:
             return nome
+
     return None
 
 
 def limpar_historico(texto):
+
     texto = texto.replace(" ", "")
+
     partes = texto.split(",")
 
     historico = []
     invalidos = []
 
     for parte in partes:
+
         if parte == "":
             continue
 
         try:
+
             n = int(parte)
 
             if 0 <= n <= 36:
                 historico.append(n)
+
             else:
                 invalidos.append(parte)
 
@@ -89,18 +97,21 @@ def analisar_setores(historico):
     maior_batida = max(contagem.values())
 
     setores_mais_batidos = [
+
         setor for setor, qtd in contagem.items()
+
         if qtd == maior_batida
     ]
 
     # ==============================
-    # AUSÊNCIA
+    # AUSÊNCIAS
     # ==============================
 
     ausencias = {}
 
     for setor in setores:
 
+        # ausência atual
         ausencia_atual = 0
 
         for item in sequencia:
@@ -110,6 +121,7 @@ def analisar_setores(historico):
 
             ausencia_atual += 1
 
+        # maior ausência recente
         maior_ausencia = 0
         ausencia_temp = 0
         encontrou_primeiro = False
@@ -119,6 +131,7 @@ def analisar_setores(historico):
             if item["setor"] == setor:
 
                 if encontrou_primeiro:
+
                     maior_ausencia = max(
                         maior_ausencia,
                         ausencia_temp
@@ -137,13 +150,27 @@ def analisar_setores(historico):
             "maior": maior_ausencia
         }
 
+    # ==============================
+    # RANKING
+    # ==============================
+
     ranking = sorted(
         contagem.items(),
         key=lambda x: x[1],
         reverse=True
     )
 
+    # ==============================
+    # SETOR MAIS AUSENTE
+    # ==============================
+
+    setor_mais_ausente = max(
+        ausencias.items(),
+        key=lambda x: x[1]["atual"]
+    )
+
     return {
+
         "ultimos_10": ultimos_10,
         "leitura": leitura,
         "sequencia": sequencia,
@@ -151,7 +178,8 @@ def analisar_setores(historico):
         "ranking": ranking,
         "maior_batida": maior_batida,
         "setores_mais_batidos": setores_mais_batidos,
-        "ausencias": ausencias
+        "ausencias": ausencias,
+        "setor_mais_ausente": setor_mais_ausente
     }
 
 
@@ -161,7 +189,9 @@ def analisar_setores(historico):
 
 st.title("Estratégia: Análise de Setores")
 
-st.write("Leitura feita apenas com os 10 últimos números.")
+st.write(
+    "Leitura feita apenas com os 10 últimos números."
+)
 
 st.info(
     "Cole o histórico separado por vírgula.\n"
@@ -175,19 +205,31 @@ historico_texto = st.text_input(
 
 if st.button("Analisar"):
 
-    historico, invalidos = limpar_historico(historico_texto)
+    historico, invalidos = limpar_historico(
+        historico_texto
+    )
 
     if invalidos:
-        st.warning(f"Valores inválidos ignorados: {invalidos}")
+
+        st.warning(
+            f"Valores inválidos ignorados: {invalidos}"
+        )
 
     if len(historico) < 10:
-        st.error("Digite pelo menos 10 números válidos.")
+
+        st.error(
+            "Digite pelo menos 10 números válidos."
+        )
 
     else:
 
         resultado = analisar_setores(historico)
 
         st.divider()
+
+        # ==============================
+        # ÚLTIMOS 10
+        # ==============================
 
         st.subheader("Últimos 10 números")
 
@@ -199,12 +241,23 @@ if st.button("Analisar"):
 
         st.divider()
 
+        # ==============================
+        # SEQUÊNCIA
+        # ==============================
+
         st.subheader("Sequência por setor")
 
         for item in resultado["sequencia"]:
-            st.write(f"- {item['numero']} → {item['setor']}")
+
+            st.write(
+                f"- {item['numero']} → {item['setor']}"
+            )
 
         st.divider()
+
+        # ==============================
+        # CONTAGEM
+        # ==============================
 
         st.subheader("Contagem por setor")
 
@@ -212,7 +265,9 @@ if st.button("Analisar"):
 
         colunas = [col1, col2, col3, col4]
 
-        for i, (setor, numeros) in enumerate(setores.items()):
+        for i, (setor, numeros) in enumerate(
+            setores.items()
+        ):
 
             with colunas[i]:
 
@@ -226,6 +281,10 @@ if st.button("Analisar"):
 
         st.divider()
 
+        # ==============================
+        # RANKING
+        # ==============================
+
         st.subheader("Ranking dos setores")
 
         for posicao, (setor, qtd) in enumerate(
@@ -234,10 +293,15 @@ if st.button("Analisar"):
         ):
 
             st.write(
-                f"{posicao}º — {setor}: {qtd} batida(s)"
+                f"{posicao}º — "
+                f"{setor}: {qtd} batida(s)"
             )
 
         st.divider()
+
+        # ==============================
+        # SETOR DOMINANTE AUSENTE
+        # ==============================
 
         st.subheader("Setor dominante ausente")
 
@@ -253,12 +317,76 @@ if st.button("Analisar"):
                 f"{resultado['ausencias'][setor]['atual']} jogada(s)"
             )
 
+            st.write(
+                f"Maior ausência recente: "
+                f"{resultado['ausencias'][setor]['maior']} jogada(s)"
+            )
+
             st.write("Cobertura:")
+
             st.write(setores[setor])
 
         st.divider()
 
+        # ==============================
+        # SETOR MAIS AUSENTE
+        # ==============================
+
+        st.subheader("Setor mais ausente")
+
+        nome_setor_ausente = resultado[
+            "setor_mais_ausente"
+        ][0]
+
+        dados_ausente = resultado[
+            "setor_mais_ausente"
+        ][1]
+
+        st.warning(
+            f"{nome_setor_ausente} está ausente há "
+            f"{dados_ausente['atual']} jogada(s)"
+        )
+
+        st.write("Cobertura:")
+
+        st.write(setores[nome_setor_ausente])
+
+        st.write(
+            f"Maior ausência recente: "
+            f"{dados_ausente['maior']} jogada(s)"
+        )
+
+        st.divider()
+
+        # ==============================
+        # AUSÊNCIA DE TODOS
+        # ==============================
+
+        st.subheader("Ausência de todos os setores")
+
+        for setor in setores:
+
+            st.write(
+
+                f"- {setor}: "
+                f"ausência atual "
+                f"{resultado['ausencias'][setor]['atual']} jogada(s) | "
+                f"maior ausência recente "
+                f"{resultado['ausencias'][setor]['maior']} jogada(s)"
+            )
+
+        st.divider()
+
+        # ==============================
+        # RESUMO
+        # ==============================
+
         st.subheader("Resumo rápido")
+
+        st.write(
+            "Setor(es) dominante(s):",
+            resultado["setores_mais_batidos"]
+        )
 
         for setor in resultado["setores_mais_batidos"]:
 
@@ -268,3 +396,11 @@ if st.button("Analisar"):
                 f"ausência atual: "
                 f"{resultado['ausencias'][setor]['atual']}"
             )
+
+        st.write("")
+
+        st.write(
+            f"Setor mais ausente: "
+            f"{nome_setor_ausente} "
+            f"({dados_ausente['atual']} jogada(s) sem bater)"
+        )
